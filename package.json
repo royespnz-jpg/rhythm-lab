@@ -1,0 +1,16 @@
+{
+  "name": "rhythm-lab",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Rhythm Lab: content words, function words and the rhythm of English (Pronouncing American English, Unit 5), with the book recordings, ElevenLabs voices and a recorder.",
+  "type": "module",
+  "scripts": {
+    "start": "node scripts/serve.mjs",
+    "test": "node --test",
+    "gs": "node scripts/split-gs.mjs",
+    "version": "node scripts/version.mjs"
+  },
+  "engines": {
+    "node": ">=22"
+  }
+}
