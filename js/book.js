@@ -7,10 +7,10 @@
 //   • a clip: one sentence, [track, start, end] in seconds — data-clip="E5:12.43:14.56".
 //     Clips play with Web Audio, so they start and stop exactly on the sentence.
 //   • the whole exercise, instructions included: the player at the top of a step.
-import { TRACKS } from './worksheets.js?v=202611080330';
-import { CACHE_NAME, announce, getSettings, onHalt, stop as stopVoice } from './tts.js?v=202611080330';
-import { isScriptUrl, scriptPost } from './script-api.js?v=202611080330';
-import { esc, icons } from './ui.js?v=202611080330';
+import { TRACKS } from './worksheets.js?v=202611080345';
+import { CACHE_NAME, announce, getSettings, onHalt, stop as stopVoice } from './tts.js?v=202611080345';
+import { isScriptUrl, scriptPost } from './script-api.js?v=202611080345';
+import { esc, icons } from './ui.js?v=202611080345';
 
 // ─── fetching a recording ───────────────────────────────────────────────────
 

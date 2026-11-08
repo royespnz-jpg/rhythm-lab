@@ -1,9 +1,9 @@
 // Record yourself, then compare with the model (shadowing): the book's
 // recording of the sentence when there is one, otherwise the app's voice.
-import { play, stop, saveSettings } from './tts.js?v=202611080330';
-import { playClip, parseClip } from './book.js?v=202611080330';
-import { icons, toast } from './ui.js?v=202611080330';
-import { sheetConfigured, studentName, sendRecording } from './sheets.js?v=202611080330';
+import { play, stop, saveSettings } from './tts.js?v=202611080345';
+import { playClip, parseClip } from './book.js?v=202611080345';
+import { icons, toast } from './ui.js?v=202611080345';
+import { sheetConfigured, studentName, sendRecording } from './sheets.js?v=202611080345';
 
 const MAX_MS = 12000;
 let active = null; // { button, recorder, stream, timer }

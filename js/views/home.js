@@ -1,6 +1,6 @@
-import { GROUPS, sheetById, stepsOf } from '../worksheets.js?v=202611080330';
-import { esc, icons } from '../ui.js?v=202611080330';
-import { loadProgress, pointsOf, beatHtml } from './sheet.js?v=202611080330';
+import { GROUPS, sheetById, stepsOf } from '../worksheets.js?v=202611080345';
+import { esc, icons } from '../ui.js?v=202611080345';
+import { loadProgress, pointsOf, beatHtml } from './sheet.js?v=202611080345';
 
 // "Men fight wars": three beats, whatever the number of words (Exercise 7A).
 const STAGE = stepsOf(sheetById('ideas')).find((s) => s.key === 'beat');

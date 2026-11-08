@@ -1,12 +1,12 @@
 // A worksheet: the key ideas, or one activity. Where the student has to cross
 // out, tap or choose, the step is interactive: answer, press Check, and see
 // what was right. A finished activity goes to the teacher's Google Sheet.
-import { BOOKS, WORKSHEETS, sheetById, stepsOf } from '../worksheets.js?v=202611080330';
-import { plainText, renderMarked } from '../text.js?v=202611080330';
-import { bookPlayerHtml } from '../book.js?v=202611080330';
-import { esc, icons, playButton, audioButtons, recButton, clipButton } from '../ui.js?v=202611080330';
-import { getSettings, saveSettings } from '../tts.js?v=202611080330';
-import { sheetConfigured, studentName, newId, sendResult } from '../sheets.js?v=202611080330';
+import { BOOKS, WORKSHEETS, sheetById, stepsOf } from '../worksheets.js?v=202611080345';
+import { plainText, renderMarked } from '../text.js?v=202611080345';
+import { bookPlayerHtml } from '../book.js?v=202611080345';
+import { esc, icons, playButton, audioButtons, recButton, clipButton } from '../ui.js?v=202611080345';
+import { getSettings, saveSettings } from '../tts.js?v=202611080345';
+import { sheetConfigured, studentName, newId, sendResult } from '../sheets.js?v=202611080345';
 
 const PROGRESS_KEY = 'rl.progress.v1';
 
