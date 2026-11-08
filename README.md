@@ -14,7 +14,9 @@ Es corta, a propósito:
   3. *Find the beats*: tocar las content words, que llevan los beats (ejercicio 6).
   4. *Decode the conversation*: qué significa cada línea del diálogo en inglés escrito (8A), y el diálogo completo.
 
-Cada oración se escucha **de la grabación del libro**, recortada justo en esa oración. Lo que no tiene grabación
+Cada oración se escucha **de la grabación del libro**, recortada justo en esa oración, y mientras suena **cada palabra
+se ilumina cuando el libro la dice** y el punto de cada beat late sobre su palabra (los tiempos se midieron en la
+grabación). Lo que no tiene grabación
 (las palabras de la tabla, los ejemplos de las reducciones) usa la **voz de ElevenLabs**. Hay grabadora para
 compararse con el libro, y cada actividad terminada llega a la **planilla de Google del docente**.
 
@@ -83,5 +85,7 @@ npm run version    # antes de publicar: pone una versión nueva a los archivos (
 
 - `js/worksheets.js`: el contenido. Cada clip es `[audio, inicio, fin]` en segundos de la grabación del libro.
 - `js/book.js`: pide las grabaciones al script, las guarda en el navegador y reproduce cada oración.
+- `js/timings.js` y `js/karaoke.js`: cuándo dice el libro cada palabra (alineamiento forzado de cada oración con su
+  grabación: `scripts/clips-to-align.mjs` y `scripts/align-clips.py`), y las palabras que se iluminan con el audio.
 - `js/views/sheet.js`: cómo se muestra y se corrige cada tipo de actividad.
 - `google-apps-script/Code.gs`: audios del libro, voces de ElevenLabs y resultados.

@@ -1,6 +1,6 @@
-import { GROUPS, sheetById, stepsOf } from '../worksheets.js?v=202611080345';
-import { esc, icons } from '../ui.js?v=202611080345';
-import { loadProgress, pointsOf, beatHtml } from './sheet.js?v=202611080345';
+import { GROUPS, sheetById, stepsOf } from '../worksheets.js?v=202611080415';
+import { esc, icons } from '../ui.js?v=202611080415';
+import { loadProgress, pointsOf, beatHtml } from './sheet.js?v=202611080415';
 
 // "Men fight wars": three beats, whatever the number of words (Exercise 7A).
 const STAGE = stepsOf(sheetById('ideas')).find((s) => s.key === 'beat');
@@ -11,7 +11,7 @@ function stage() {
     .map(
       (l, i) => `<button type="button" class="fam-word beat-row" data-clip="${esc(l.clip.join(':'))}" style="--w:${i}"
         aria-label="${esc(`Listen: ${l.text.replace(/\*/g, '')}, ${l.seconds.toFixed(1)} seconds`)}">
-        <span class="beats-text">${beatHtml(l.text)}</span>
+        <span class="beats-text" data-words="${esc(l.clip.join(':'))}">${beatHtml(l.text, l.clip)}</span>
         <span class="dur"><span class="dur-bar"><span style="width:${((100 * l.seconds) / longest).toFixed(1)}%"></span></span><small>${l.seconds.toFixed(1)} s</small></span>
       </button>`,
     )

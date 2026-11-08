@@ -14,9 +14,9 @@ import {
   playPreview,
   stop,
   onAudioEvent,
-} from './tts.js?v=202611080345';
-import { cyrb53 } from './audio-core.js?v=202611080345';
-import { esc, icons, toast } from './ui.js?v=202611080345';
+} from './tts.js?v=202611080415';
+import { cyrb53 } from './audio-core.js?v=202611080415';
+import { esc, icons, toast } from './ui.js?v=202611080415';
 
 const SAMPLE = 'Did you eat your lunch yet? Let me see what you have.';
 const ui = { slot: 'A', query: '', american: true, loading: false };

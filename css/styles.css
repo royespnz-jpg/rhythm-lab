@@ -5611,9 +5611,6 @@ em.tw {
   border-color: var(--accent);
   background: var(--accent);
 }
-.is-playing .bw.beat i {
-  animation: beat 0.7s var(--ease-out) infinite;
-}
 .beat-inline i {
   display: inline-block;
   width: 10px;
@@ -5999,4 +5996,205 @@ em.tw {
     grid-column: 2;
     justify-content: flex-start;
   }
+}
+
+/* ════════════════════════════════════════════════════════════════════════════
+   Rhythm Lab · motion
+   The page moves with the rhythm: while the book says a sentence, each word
+   lights up as it is said and each beat lands on its word (js/karaoke.js,
+   timings from the recording). Everything else comes in with a spring and
+   cascades as you scroll. prefers-reduced-motion turns all of it off.
+   ════════════════════════════════════════════════════════════════════════════ */
+
+/* ─── the word the recording is saying ───────────────────────────────────── */
+.kw {
+  border-radius: 5px;
+  transition:
+    background-color 0.14s var(--ease-out),
+    box-shadow 0.14s var(--ease-out),
+    opacity 0.22s var(--ease-out);
+}
+[data-words].saying .kw:not(.done):not(.now) {
+  opacity: 0.42;
+}
+[data-words].saying .kw.now {
+  background: color-mix(in srgb, var(--accent) 18%, transparent);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 18%, transparent);
+}
+.rhythm-stage [data-words].saying .kw.now {
+  background: rgb(128 150 255 / 0.24);
+  box-shadow: 0 0 0 2px rgb(128 150 255 / 0.24);
+}
+
+/* ─── the beat lands on its word ─────────────────────────────────────────── */
+.bw i {
+  --beat-glow: color-mix(in srgb, var(--accent) 28%, transparent);
+  animation: dot-in 0.5s var(--spring) calc(var(--d0, 0.15s) + var(--k, 0) * 0.07s) both;
+}
+.rhythm-stage .bw i {
+  --beat-glow: rgb(128 150 255 / 0.4);
+}
+.bw.kw.now.beat i {
+  animation: beat-hit 0.5s var(--spring);
+}
+.bw.kw.now:not(.beat) i {
+  background: currentColor;
+}
+.reveal:not(.in) .bw i {
+  animation: none;
+  opacity: 0;
+}
+@keyframes dot-in {
+  from {
+    transform: scale(0);
+    opacity: 0;
+  }
+}
+@keyframes beat-hit {
+  0% {
+    transform: scale(1);
+  }
+  30% {
+    transform: scale(1.75);
+    box-shadow: 0 0 0 7px var(--beat-glow);
+  }
+  100% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 transparent;
+  }
+}
+
+/* the home stage: the dots come in row by row, then count the real beats of
+   each sentence (when the book says them), one sentence after another */
+.rhythm-stage .beat-row {
+  --d0: calc(0.7s + var(--w) * 0.12s);
+}
+.rhythm-stage .bw.beat i {
+  animation:
+    dot-in 0.5s var(--spring) calc(var(--d0) + var(--k, 0) * 0.07s) both,
+    beat-hit 0.5s var(--spring) calc(1.9s + var(--w) * 1.75s + var(--t, 0) * 1s);
+}
+.rhythm-stage .beat-row.is-playing .bw.beat i,
+.rhythm-stage [data-words].saying .bw.beat i {
+  animation: none;
+}
+.rhythm-stage [data-words].saying .bw.kw.now.beat i {
+  animation: beat-hit 0.5s var(--spring);
+}
+
+/* how long a sentence takes: the bar grows when it comes into view */
+.reveal .dur-bar span {
+  animation: none;
+  transform: scaleX(0);
+}
+.reveal.in .dur-bar span {
+  transform: none;
+  animation: grow 0.9s var(--ease-out) 0.3s both;
+}
+
+/* ─── tapping the words ──────────────────────────────────────────────────── */
+.tap-text .ow:active {
+  transform: scale(0.94);
+}
+.tap-text .ow.on {
+  animation: tap-pop 0.32s var(--spring);
+}
+/* cross out: the line draws itself across the word */
+.strike-mode .ow::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 54%;
+  height: 3px;
+  border-radius: 2px;
+  background: var(--accent);
+  transform: scaleX(0);
+  transform-origin: left center;
+  transition: transform 0.26s var(--ease-out);
+  pointer-events: none;
+}
+.strike-mode .ow.on::after {
+  transform: scaleX(1);
+}
+.strike-mode .ow.on,
+[data-checked] .strike-mode .ow.hit,
+[data-checked] .strike-mode .ow.missed,
+[data-checked] .strike-mode .ow.wrong {
+  text-decoration: none;
+}
+[data-checked] .strike-mode .ow.hit::after {
+  transform: scaleX(1);
+  background: var(--good);
+}
+[data-checked] .strike-mode .ow.wrong::after {
+  transform: scaleX(1);
+  background: var(--bad);
+}
+[data-checked] .strike-mode .ow.missed::after {
+  transform: scaleX(1);
+  background: repeating-linear-gradient(90deg, var(--bad) 0 6px, transparent 6px 10px);
+  transition-delay: calc(var(--n, 0) * 22ms);
+}
+/* mark the beats: the dot drops onto the word */
+.beats-mode .ow.on::before {
+  animation: dot-drop 0.4s var(--spring) both;
+}
+/* Check: the answers come in one after another */
+[data-checked] .tap-text .ow.hit,
+[data-checked] .tap-text .ow.missed,
+[data-checked] .tap-text .ow.wrong {
+  animation: tap-pop 0.42s var(--spring) calc(var(--n, 0) * 24ms) both;
+}
+@keyframes tap-pop {
+  0% {
+    transform: scale(0.86);
+  }
+  60% {
+    transform: scale(1.08);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+@keyframes dot-drop {
+  from {
+    transform: translateY(-12px) scale(0.2);
+    opacity: 0;
+  }
+}
+
+/* ─── results and sections ───────────────────────────────────────────────── */
+.check-score {
+  display: inline-block;
+  animation: pop 0.5s var(--spring) both;
+}
+.done-panel:not([hidden]) {
+  animation: rise 0.6s var(--ease-out) both;
+}
+.feedback:not([hidden]) .verdict {
+  display: inline-block;
+  animation: pop 0.45s var(--spring) both;
+}
+.part-h.reveal .part-letter {
+  transform: scale(0.3) rotate(-14deg);
+  opacity: 0;
+  transition:
+    transform 0.6s var(--spring) 0.12s,
+    opacity 0.3s var(--ease-out) 0.12s;
+}
+.part-h.reveal.in .part-letter {
+  transform: none;
+  opacity: 1;
+}
+.step.reveal .step-n {
+  transform: translateX(-10px);
+  opacity: 0;
+  transition:
+    transform 0.5s var(--ease-out) 0.1s,
+    opacity 0.5s var(--ease-out) 0.1s;
+}
+.step.reveal.in .step-n {
+  transform: none;
+  opacity: 1;
 }

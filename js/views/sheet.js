@@ -1,12 +1,13 @@
 // A worksheet: the key ideas, or one activity. Where the student has to cross
 // out, tap or choose, the step is interactive: answer, press Check, and see
 // what was right. A finished activity goes to the teacher's Google Sheet.
-import { BOOKS, WORKSHEETS, sheetById, stepsOf } from '../worksheets.js?v=202611080345';
-import { plainText, renderMarked } from '../text.js?v=202611080345';
-import { bookPlayerHtml } from '../book.js?v=202611080345';
-import { esc, icons, playButton, audioButtons, recButton, clipButton } from '../ui.js?v=202611080345';
-import { getSettings, saveSettings } from '../tts.js?v=202611080345';
-import { sheetConfigured, studentName, newId, sendResult } from '../sheets.js?v=202611080345';
+import { BOOKS, WORKSHEETS, sheetById, stepsOf } from '../worksheets.js?v=202611080415';
+import { plainText, renderMarked } from '../text.js?v=202611080415';
+import { bookPlayerHtml } from '../book.js?v=202611080415';
+import { esc, icons, playButton, audioButtons, recButton, clipButton } from '../ui.js?v=202611080415';
+import { getSettings, saveSettings } from '../tts.js?v=202611080415';
+import { TIMINGS } from '../timings.js?v=202611080415';
+import { sheetConfigured, studentName, newId, sendResult } from '../sheets.js?v=202611080415';
 
 const PROGRESS_KEY = 'rl.progress.v1';
 
@@ -53,16 +54,31 @@ export function tapTokens(text, type) {
   return out;
 }
 
-// A sentence with its beats: a big dot over each *beat*, a small one over every other word.
-export function beatHtml(text) {
+// A sentence with its beats: a big dot over each *beat*, a small one over every
+// other word. --k: the word's place; --t: when the recording says it (seconds).
+export function beatHtml(text, clip) {
+  const times = clip ? TIMINGS[clip.join(':')] : null;
+  let k = 0;
   return tapTokens(text, 'beats')
-    .map((t) =>
-      t.sep !== undefined
-        ? esc(t.sep)
-        : `<span class="bw${t.role === 'target' ? ' beat' : ''}"><i aria-hidden="true"></i>${esc(t.word)}</span>`,
-    )
+    .map((t) => {
+      if (t.sep !== undefined) return esc(t.sep);
+      const at = times?.[k]?.[0];
+      return `<span class="bw kw${t.role === 'target' ? ' beat' : ''}" style="--k:${k++}${at != null ? `;--t:${at}` : ''}"><i aria-hidden="true"></i>${esc(t.word)}</span>`;
+    })
     .join('');
 }
+
+// Each word of a sentence in its own .kw span (the text between the tags), so
+// it can light up when the recording says it.
+export function kwWrap(html) {
+  return String(html)
+    .split(/(<[^>]+>)/)
+    .map((part) => (part.startsWith('<') ? part : part.replace(/(&[#\w]+;)|([A-Za-z’']+)/g, (m, ent, w) => (ent ? m : `<span class="kw">${w}</span>`))))
+    .join('');
+}
+
+// The words of a clip: the container the karaoke looks for (js/karaoke.js).
+export const wordsAttr = (clip) => (clip ? ` data-words="${esc(clip.join(':'))}"` : '');
 
 // ─── the units of each activity (the things that score a point) ─────────────
 
@@ -211,7 +227,7 @@ function tableBody(step) {
 function exLine(html, { clip, say, note = '', extra = '' }) {
   const listen = clip ? clipButton(clip, { say }) : audioButtons(say);
   return `<li class="ex rec-host">
-    <div class="ex-body"><span class="ex-mark">${html}</span>${note ? `<span class="ex-note">${esc(note)}</span>` : ''}${extra}</div>
+    <div class="ex-body"><span class="ex-mark"${wordsAttr(clip)}>${clip ? kwWrap(html) : html}</span>${note ? `<span class="ex-note">${esc(note)}</span>` : ''}${extra}</div>
     <div class="ex-actions">${listen}${recButton(say)}</div>
     <div class="rec-out" hidden></div>
   </li>`;
@@ -238,7 +254,7 @@ function formsBody(step) {
         return `<div class="form-row" role="row">
           <div class="form-w" role="cell">${clipButton(r.word, { label: r.w, say: r.w, main: false, round: false, title: `Listen: “${r.w}” alone (strong form)` })}<span class="ipa">${esc(r.strong)}</span></div>
           <div class="form-weak" role="cell"><span class="arrow" aria-hidden="true">→</span><span class="ipa">${esc(r.weak)}</span></div>
-          <div class="form-ex rec-host" role="cell"><span class="ex-mark">${renderMarked(r.ex)}</span>
+          <div class="form-ex rec-host" role="cell"><span class="ex-mark"${wordsAttr(r.clip)}>${kwWrap(renderMarked(r.ex))}</span>
             <span class="ex-actions">${clipButton(r.clip, { say })}${recButton(say, { round: true })}</span>
             <div class="rec-out" hidden></div></div>
         </div>`;
@@ -254,7 +270,7 @@ function rhythmBody(step) {
     <ol class="rhythm-lines">${step.lines
       .map(
         (l) => `<li class="ex rec-host rhythm-line" data-clip-row="${esc(l.clip.join(':'))}">
-          <div class="ex-body"><span class="beats-text">${beatHtml(l.text)}</span>
+          <div class="ex-body"><span class="beats-text"${wordsAttr(l.clip)}>${beatHtml(l.text, l.clip)}</span>
             <span class="dur" title="${l.seconds.toFixed(2)} seconds in the recording"><span class="dur-bar"><span style="width:${((100 * l.seconds) / longest).toFixed(1)}%"></span></span><small>${l.seconds.toFixed(1)} s</small></span></div>
           <div class="ex-actions">${clipButton(l.clip, { say: plainText(l.text) })}${recButton(plainText(l.text))}</div>
           <div class="rec-out" hidden></div>
@@ -283,7 +299,7 @@ function choiceBody(step) {
       const listen = item.clip ? clipButton(item.clip, { label: 'Listen', round: false, say: item.q }) : '';
       const after = item.after ? clipButton(item.after, { label: 'Hear it written', main: false, round: false, title: 'The written English, in the book’s recording' }) : '';
       return `<li class="card item" data-item="${i}" data-answer="${item.answer}">
-        <div class="item-q"><div class="q">${esc(item.q)}</div><div class="row">${listen}</div></div>
+        <div class="item-q"><div class="q"${wordsAttr(item.clip)}>${item.clip ? kwWrap(esc(item.q)) : esc(item.q)}</div><div class="row">${listen}</div></div>
         <div class="options">${item.options
           .map((o, k) => `<button type="button" class="opt" data-opt="${k}" aria-label="${esc(o)}">${esc(o)}</button>`)
           .join('')}</div>
@@ -297,18 +313,19 @@ function choiceBody(step) {
 
 function tapBody(step) {
   let n = 0;
+  let w = 0;
   return `<ol class="tap-lines${step.type === 'beats' ? ' beats-mode' : ' strike-mode'}">${step.lines
     .map((l, li) => {
       const words = tapTokens(l.text, step.type)
         .map((t) => {
           if (t.sep !== undefined) return esc(t.sep);
           const u = t.role === 'target' ? ` data-u="${n++}"` : '';
-          return `<button type="button" class="ow"${u} data-role="${t.role}" aria-pressed="false">${esc(t.word)}</button>`;
+          return `<button type="button" class="ow kw"${u} data-role="${t.role}" style="--n:${w++}" aria-pressed="false">${esc(t.word)}</button>`;
         })
         .join('');
       const say = plainText(l.text);
       return `<li class="ex rec-host tap-line" data-line="${li}">
-        <div class="ex-body"><span class="tap-text">${words}</span></div>
+        <div class="ex-body"><span class="tap-text"${wordsAttr(l.clip)}>${words}</span></div>
         <div class="ex-actions">${clipButton(l.clip, { say })}${recButton(say)}</div>
         <div class="rec-out" hidden></div>
       </li>`;
@@ -324,7 +341,7 @@ function dialogueBody(step) {
       if (l.scene) return `<li class="scene">${clipButton(l.clip, { say: l.scene, main: false })}<i>(${esc(l.scene)})</i></li>`;
       return `<li class="dlg-line voice-${l.who} rec-host">
         <span class="who"><span aria-hidden="true">${esc(l.who)}</span><span class="sr-only">Speaker ${esc(l.who)}:</span></span>
-        <span class="said"><span class="said-c">${esc(l.said)}</span><small class="said-w">${esc(l.written)}</small></span>
+        <span class="said"><span class="said-c"${wordsAttr(l.clip)}>${kwWrap(esc(l.said))}</span><small class="said-w"${wordsAttr(l.wclip)}>${kwWrap(esc(l.written))}</small></span>
         <span class="dlg-actions">${clipButton(l.clip, { say: l.said, title: 'As it sounds (book recording)' })}${clipButton(l.wclip, { say: l.written, main: false, title: 'As it is written (book recording)' })}${recButton(l.said, { round: true })}</span>
         <div class="rec-out" hidden></div>
       </li>`;

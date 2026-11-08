@@ -7,10 +7,10 @@
 //   • a clip: one sentence, [track, start, end] in seconds — data-clip="E5:12.43:14.56".
 //     Clips play with Web Audio, so they start and stop exactly on the sentence.
 //   • the whole exercise, instructions included: the player at the top of a step.
-import { TRACKS } from './worksheets.js?v=202611080345';
-import { CACHE_NAME, announce, getSettings, onHalt, stop as stopVoice } from './tts.js?v=202611080345';
-import { isScriptUrl, scriptPost } from './script-api.js?v=202611080345';
-import { esc, icons } from './ui.js?v=202611080345';
+import { TRACKS } from './worksheets.js?v=202611080415';
+import { CACHE_NAME, announce, getSettings, onHalt, stop as stopVoice } from './tts.js?v=202611080415';
+import { isScriptUrl, scriptPost } from './script-api.js?v=202611080415';
+import { esc, icons } from './ui.js?v=202611080415';
 
 // ─── fetching a recording ───────────────────────────────────────────────────
 
@@ -83,7 +83,13 @@ function bufferOf(track) {
 
 let token = 0; // the clip that should be playing
 let seq = 0; // the sequence (playClips) that should be playing
-let current = null; // { src, resolve }
+let current = null; // { src, resolve, key, t0 }
+
+// The clip playing now and how far into it (seconds): the words light up by it.
+export function clipNow() {
+  // outputLatency: what the speakers play now is a little behind the clock.
+  return current && ctx ? { key: current.key, t: ctx.currentTime - current.t0 - (ctx.outputLatency || 0) } : null;
+}
 
 function stopClip() {
   if (!current) return;
@@ -132,7 +138,7 @@ export async function playClip(clip, { inSeq = false } = {}) {
     const src = ac.createBufferSource();
     src.buffer = buf;
     src.connect(ac.destination);
-    current = { src, resolve };
+    current = { src, resolve, key: clip.join(':'), t0: ac.currentTime };
     src.onended = () => {
       if (current && current.src === src) {
         current = null;
@@ -141,7 +147,7 @@ export async function playClip(clip, { inSeq = false } = {}) {
       resolve();
     };
     src.start(0, from, length);
-    announce({ type: 'play', source: `Book recording · ${TRACKS[track].title}` });
+    announce({ type: 'play', source: `Book recording · ${TRACKS[track].title}`, clip: current.key });
   });
 }
 

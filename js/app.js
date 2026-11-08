@@ -1,4 +1,4 @@
-import { GROUPS, WORKSHEETS, sheetById } from './worksheets.js?v=202611080345';
+import { GROUPS, WORKSHEETS, sheetById } from './worksheets.js?v=202611080415';
 import {
   play,
   stop,
@@ -10,15 +10,16 @@ import {
   clearAudioCache,
   checkScript,
   loadVoices,
-} from './tts.js?v=202611080345';
-import { handleRecorderClick } from './recorder.js?v=202611080345';
-import { handleBookClick, playClip, playClips, parseClip, bookList } from './book.js?v=202611080345';
-import { esc, toast } from './ui.js?v=202611080345';
-import { initVoicePanel, open as openVoicePanel } from './voice-panel.js?v=202611080345';
-import { renderHome } from './views/home.js?v=202611080345';
-import { renderSheet, handleSheetClick, handleNameForm, resetSheet } from './views/sheet.js?v=202611080345';
-import { renderSettings, renderCredits, bookTableHtml } from './views/settings.js?v=202611080345';
-import { applyLinkParams, flushQueue, isSheetUrl, testConnection } from './sheets.js?v=202611080345';
+} from './tts.js?v=202611080415';
+import { handleRecorderClick } from './recorder.js?v=202611080415';
+import { handleBookClick, playClip, playClips, parseClip, bookList } from './book.js?v=202611080415';
+import { esc, toast } from './ui.js?v=202611080415';
+import { followClip, stopKaraoke } from './karaoke.js?v=202611080415';
+import { initVoicePanel, open as openVoicePanel } from './voice-panel.js?v=202611080415';
+import { renderHome } from './views/home.js?v=202611080415';
+import { renderSheet, handleSheetClick, handleNameForm, resetSheet } from './views/sheet.js?v=202611080415';
+import { renderSettings, renderCredits, bookTableHtml } from './views/settings.js?v=202611080415';
+import { applyLinkParams, flushQueue, isSheetUrl, testConnection } from './sheets.js?v=202611080415';
 
 const root = document.documentElement;
 const main = document.getElementById('main');
@@ -91,6 +92,18 @@ const REVEAL = [
   '.home-section > h2',
   '.group-head',
   '.settings-stack > *',
+  // inside the steps: every card, line and row comes in on its own, in a cascade
+  '.book-player',
+  '.examples > .ex',
+  '.rhythm-lines > li',
+  '.tap-lines > li',
+  '.items > .item',
+  '.forms > .form-row',
+  '.talk > li',
+  '.wtable > .wrow',
+  '.wt-group',
+  '.step-body > .table-wrap',
+  '.step-note',
 ].join(',');
 
 const observer =
@@ -193,7 +206,10 @@ onAudioEvent((e) => {
     engineEl.title = `Playing: ${e.source}`;
     stopBtn.hidden = false;
   }
+  // The words of a book sentence light up as the recording says them.
+  if (e.type === 'play' && e.clip) followClip(activeButton, e.clip);
   if (e.type === 'end' || e.type === 'stop') {
+    stopKaraoke();
     clearPlaying();
     activeButton = null;
   }

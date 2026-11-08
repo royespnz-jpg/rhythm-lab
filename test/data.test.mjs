@@ -152,7 +152,11 @@ test('find the beats: content words only', () => {
       assert.equal(t.role === 'target', !FUNCTION.test(t.word), `${l.text}: ${t.word}`);
     }
   }
-  assert.match(beatHtml('The *men* *fight* *wars*.'), /<span class="bw"><i aria-hidden="true"><\/i>The<\/span> <span class="bw beat">/);
+  const html = beatHtml('The *men* *fight* *wars*.');
+  assert.match(html, /<span class="bw kw" style="--k:0"><i aria-hidden="true"><\/i>The<\/span> <span class="bw kw beat" style="--k:1">/);
+  assert.equal((html.match(/class="bw kw beat"/g) || []).length, 3);
+  // With its clip, each word also knows when the recording says it.
+  assert.match(beatHtml('*Men* *fight* *wars*.', ['E7A', 50.29, 51.94]), /--k:1;--t:0\.44/);
 });
 
 test('the rhythm demo: three beats each, about the same time', () => {
@@ -173,5 +177,52 @@ test('strong and weak forms: the 18 words of Exercise 4B, each crossed out in it
     assert.ok(r.ex.includes(`{${r.w}}`), `${r.w}: ${r.ex}`);
     assert.ok(r.word[2] < r.clip[1], `${r.w}: the word alone comes first`);
     assert.match(r.weak, /ə|ɚ|n̩/, `${r.w}: a reduced vowel`);
+  }
+});
+
+test('the karaoke: every word on the page has its moment in the recording', async () => {
+  const { TIMINGS } = await import('../js/timings.js');
+  const { lineHtml, kwWrap, beatHtml } = await import('../js/views/sheet.js');
+  const { renderMarked } = await import('../js/text.js');
+  const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
+  const kws = (html) => (html.match(/class="(?:bw )?kw\b/g) || []).length;
+  const seen = new Set();
+  const check = (clip, count, what) => {
+    const key = clip.join(':');
+    const t = TIMINGS[key];
+    assert.ok(t, `${what}: no timings for ${key}`);
+    assert.equal(count, t.length, `${what}: ${count} words on the page, ${t.length} in the recording`);
+    for (let i = 0; i < t.length; i++) {
+      assert.ok(t[i][0] < t[i][1] && t[i][0] >= 0, `${what}: word ${i}`);
+      if (i) assert.ok(t[i][0] >= t[i - 1][0], `${what}: word ${i} in order`);
+    }
+    assert.ok(t.at(-1)[1] <= clip[2] - clip[1] + 0.05, `${what}: inside the clip`);
+    seen.add(key);
+  };
+  for (const { sheet, step: s } of all) {
+    const where = `${sheet.id} ${s.key}`;
+    for (const l of s.lines || []) {
+      if (l.scene || !(l.clip || l.wclip)) continue;
+      if (s.type === 'lines') check(l.clip, kws(kwWrap(lineHtml(l.text))), `${where}: ${l.text}`);
+      if (s.type === 'rhythm') check(l.clip, kws(beatHtml(l.text, l.clip)), `${where}: ${l.text}`);
+      if (s.type === 'strike' || s.type === 'beats') check(l.clip, tapTokens(l.text, s.type).filter((t) => t.word).length, `${where}: ${l.text}`);
+      if (s.type === 'dialogue') {
+        check(l.clip, kws(kwWrap(esc(l.said))), `${where}: ${l.said}`);
+        check(l.wclip, kws(kwWrap(esc(l.written))), `${where}: ${l.written}`);
+      }
+    }
+    for (const r of s.rows || []) if (r.clip) check(r.clip, kws(kwWrap(renderMarked(r.ex))), `${where}: ${r.ex}`);
+    for (const it of s.items || []) if (it.clip) check(it.clip, kws(kwWrap(esc(it.q))), `${where}: ${it.q}`);
+  }
+  assert.equal(seen.size, Object.keys(TIMINGS).length, 'every timing is used');
+});
+
+test('the beats of Men fight wars fall at regular intervals in the recording', async () => {
+  const { TIMINGS } = await import('../js/timings.js');
+  for (const l of step('ideas', 'beat').lines) {
+    const t = TIMINGS[l.clip.join(':')];
+    const beats = tapTokens(l.text, 'beats').filter((x) => x.word).map((x, i) => [x, t[i][0]]).filter(([x]) => x.role === 'target').map(([, s]) => s);
+    const gaps = beats.slice(1).map((b, i) => b - beats[i]);
+    assert.ok(Math.max(...gaps) - Math.min(...gaps) < 0.12, `${l.text}: beats at ${beats.join(', ')}`);
   }
 });
